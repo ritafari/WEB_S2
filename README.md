@@ -16,7 +16,7 @@ To get the app up and running, follow these steps. This assumes you have [Node.j
     ```
     This'll start the backend server (on http://localhost:5001)
 
-    **Note**: If you can get an error saying that the port is already in use make sure to change it in both the `server.js` file and in the `Gamescreen.js` file.
+    **Note**: If you get an error saying that the port is already in use make sure to change it in both the `server.js` file and in the `Gamescreen.js` file.
 
 3. **start the Frontend**
     Open a seperate terminal, navigate to the frontend folder, and run:
