@@ -10,7 +10,7 @@ const GameScreen = ({ mode, onReturn }) => {
 
   const fetchRandomCountry = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/countries/random?mode=flag');
+      const res = await axios.get('http://localhost:5001/api/countries/random?mode=flag');
       return res.data.country || res.data || { name: 'Unknown', flag: 'https://flagcdn.com/w320/xx.png' };
     } catch (error) {
       console.error('Error fetching random country:', error);
@@ -20,7 +20,7 @@ const GameScreen = ({ mode, onReturn }) => {
 
   const fetchQuestion = useCallback(async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/countries/random?mode=${mode}`);
+      const res = await axios.get(`http://localhost:5001/api/countries/random?mode=${mode}`);
       console.log('API Response:', res.data);
       if (mode === 'name') {
         const { country, otherFlags } = res.data;
@@ -64,7 +64,7 @@ const GameScreen = ({ mode, onReturn }) => {
     if (!question || !question.country || !guess.trim()) return;
 
     try {
-      const res = await axios.post('http://localhost:5000/api/check-answer', {
+      const res = await axios.post('http://localhost:5001/api/check-answer', {
         guess: guess.trim(),
         countryName: question.country.name,
         mode: 'flag',
