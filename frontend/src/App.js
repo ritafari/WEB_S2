@@ -23,6 +23,9 @@ const App = () => {
         <button className="button" onClick={() => setMode('flag')}>
           Guess the Country
         </button>
+        <button className="button" onClick={() => setMode('moving')}>
+          Catch the Moving flag
+        </button>
       </div>
     </div>
   );

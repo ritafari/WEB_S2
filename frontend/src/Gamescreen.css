@@ -49,12 +49,11 @@
 }
 
 .flag {
-  width: 100px;
-  height: 60px;
+  width: 80px;
+  height: 50px;
   cursor: pointer;
-  border-radius: 5px;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  transition: all 0.2s ease-in-out;
 }
 
 .flag:hover {
@@ -134,4 +133,48 @@
   .return-button:hover {
     background-color: #acb6e5;
     transform: translateY(-2px);
+  }
+
+  .moving-container {
+    position: relative;
+    height: 80vh;
+    width: 100%;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    margin: 20px 0;
+  }
+  
+  .moving-flag {
+    transition: all 1s ease-out;
+    z-index: 2;
+  }
+  
+  .decoy-flag {
+    opacity: 0.7;
+    z-index: 1;
+  }
+
+  .targetHeader {
+    font-size: 1.5rem;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px 20px;
+    border-radius: 25px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .targetName {
+    color: #27ae60;
+    font-weight: 700;
+  }
+  
+  .boundary {
+    position: absolute;
+    border: 3px solid #74ebd5;
+    width: 600px;
+    height: 500px;
+    pointer-events: none;
+    border-radius: 15px;
   }

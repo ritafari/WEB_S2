@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import './Gamescreen.css';
 
@@ -7,11 +7,14 @@ const GameScreen = ({ mode, onReturn }) => {
   const [score, setScore] = useState(0);
   const [guess, setGuess] = useState('');
   const [fallback, setFallback] = useState({ name: '', flag: '' });
+  const [flags, setFlags] = useState([]);
+  const [targetCountry, setTargetCountry] = useState('');
+  const animationFrameRef = useRef(null);
 
   const fetchRandomCountry = async () => {
     try {
       const res = await axios.get('http://localhost:5001/api/countries/random?mode=flag');
-      return res.data.country || res.data || { name: 'Unknown', flag: 'https://flagcdn.com/w320/xx.png' };
+      return res.data.country || { name: 'Unknown', flag: 'https://flagcdn.com/w320/xx.png' };
     } catch (error) {
       console.error('Error fetching random country:', error);
       return { name: 'Unknown', flag: 'https://flagcdn.com/w320/xx.png' };
@@ -21,7 +24,7 @@ const GameScreen = ({ mode, onReturn }) => {
   const fetchQuestion = useCallback(async () => {
     try {
       const res = await axios.get(`http://localhost:5001/api/countries/random?mode=${mode}`);
-      console.log('API Response:', res.data);
+      
       if (mode === 'name') {
         const { country, otherFlags } = res.data;
         const allFlags = [
@@ -29,13 +32,41 @@ const GameScreen = ({ mode, onReturn }) => {
           ...otherFlags.map(flag => ({ ...flag, isCorrect: false })),
         ].sort(() => Math.random() - 0.5);
         setQuestion({ country, allFlags });
-      } else if (mode === 'flag') {
-        const country = res.data.country || res.data;
-        if (!country || !country.flag) {
-          throw new Error('Invalid country data in flag mode');
-        }
+      } 
+      else if (mode === 'flag') {
+        const country = res.data.country;
+        if (!country?.flag) throw new Error('Invalid country data');
         setQuestion({ country });
       }
+      else if (mode === 'moving') {
+        const { country, otherFlags } = res.data;
+        
+        // creates completely random order with correct flag mixed in
+        const initialFlags = [
+          ...otherFlags.map(flag => ({
+            ...flag,
+            x: Math.random() * 500,
+            y: Math.random() * 500,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 8,
+            isCorrect: false
+          })),
+          {
+            ...country,
+            code: country.code + '_TARGET', 
+            x: Math.random() * 500,
+            y: Math.random() * 500,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 8,
+            isCorrect: true
+          }
+        ].sort(() => Math.random() - 0.5); // shuffle
+      
+        setTargetCountry(country.name);
+        setFlags(initialFlags);
+        setQuestion({ country });
+      }
+      
       setGuess('');
     } catch (error) {
       console.error('Error fetching question:', error);
@@ -49,19 +80,61 @@ const GameScreen = ({ mode, onReturn }) => {
     fetchQuestion();
   }, [fetchQuestion, mode]);
 
-  const handleGuess = (selectedName) => {
-    if (!question || !question.country) return;
+  // For the animation 
+  useEffect(() => {
+    const animate = () => {
+      setFlags(prevFlags => prevFlags.map(flag => {
+        let newX = flag.x + flag.vx;
+        let newY = flag.y + flag.vy;
+        let newVx = flag.vx;
+        let newVy = flag.vy;
 
-    const isCorrect = selectedName === question.country.name;
-    if (isCorrect) {
-      setScore((prevScore) => prevScore + 1);
+        // To make the flags bounce off walls
+        if (newX <= 0 || newX >= 500) newVx *= -1;
+        if (newY <= 0 || newY >= 400) newVy *= -1;
+
+        return {
+          ...flag,
+          x: Math.max(0, Math.min(500, newX)),
+          y: Math.max(0, Math.min(400, newY)),
+          vx: newVx,
+          vy: newVy
+        };
+      }));
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    if (mode === 'moving') {
+      animationFrameRef.current = requestAnimationFrame(animate);
+    }
+    
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [mode]);
+
+  const handleFlagClick = (clickedFlag) => {
+    if (clickedFlag.isCorrect) {
+      setScore(prev => prev + 1);
+      fetchQuestion();
+    } else {
+      onReturn();
+    }
+  };
+
+  const handleGuess = (selectedName) => {
+    if (!question?.country) return;
+    if (selectedName === question.country.name) {
+      setScore(prev => prev + 1);
     }
     fetchQuestion();
   };
 
   const handleGuessSubmit = async (e) => {
     e.preventDefault();
-    if (!question || !question.country || !guess.trim()) return;
+    if (!question?.country || !guess.trim()) return;
 
     try {
       const res = await axios.post('http://localhost:5001/api/check-answer', {
@@ -69,62 +142,12 @@ const GameScreen = ({ mode, onReturn }) => {
         countryName: question.country.name,
         mode: 'flag',
       });
-      console.log('Check Answer Response:', res.data);
-      if (res.data.correct) {
-        setScore((prevScore) => prevScore + 1);
-      }
+      if (res.data.correct) setScore(prev => prev + 1);
       fetchQuestion();
     } catch (error) {
       console.error('Error checking answer:', error);
     }
   };
-
-  // Add hover effects using a pseudo-class workaround
-  const addHoverEffects = () => {
-    document.querySelectorAll('img[style*="cursor: pointer"]').forEach((el) => {
-      el.addEventListener('mouseover', () => {
-        el.style.transform = 'scale(1.1)';
-        el.style.boxShadow = '0 5px 10px rgba(0, 0, 0, 0.2)';
-      });
-      el.addEventListener('mouseout', () => {
-        el.style.transform = 'scale(1)';
-        el.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.1)';
-      });
-    });
-
-    document.querySelectorAll('button').forEach((el) => {
-      el.addEventListener('mouseover', () => {
-        if (el.style.backgroundColor === '#ff6b6b') {
-          el.style.backgroundColor = '#acb6e5';
-        } else {
-          el.style.backgroundColor = '#acb6e5';
-        }
-        el.style.transform = 'translateY(-2px)';
-      });
-      el.addEventListener('mouseout', () => {
-        if (el.style.backgroundColor === '#acb6e5' && el.textContent === 'Return') {
-          el.style.backgroundColor = '#ff6b6b';
-        } else {
-          el.style.backgroundColor = '#74ebd5';
-        }
-        el.style.transform = 'translateY(0)';
-      });
-    });
-
-    document.querySelectorAll('input').forEach((el) => {
-      el.addEventListener('focus', () => {
-        el.style.borderColor = '#74ebd5';
-      });
-      el.addEventListener('blur', () => {
-        el.style.borderColor = '#ddd';
-      });
-    });
-  };
-
-  // Call hover effects after render
-  useEffect(() => {
-    addHoverEffects();
-  }, [question]);
 
   if (!question || !question.country) {
     return <div style={styles.loading}>Loading...</div>;
@@ -136,11 +159,11 @@ const GameScreen = ({ mode, onReturn }) => {
       <div style={styles.gameBox}>
         {mode === 'name' && (
           <div style={styles.modeContainer}>
-            <h2 style={styles.countryName}>{question.country.name || fallback.name || 'Random Country'}</h2>
+            <h2 style={styles.countryName}>{question.country.name}</h2>
             <div style={styles.flagsContainer}>
-              {question.allFlags.map((flagObj, index) => (
+              {question.allFlags?.map((flagObj, index) => (
                 <img
-                  key={`${flagObj.name}-${index}`}
+                  key={`flag-${index}`}
                   src={flagObj.flag}
                   alt={`Flag ${index + 1}`}
                   style={styles.flag}
@@ -150,15 +173,15 @@ const GameScreen = ({ mode, onReturn }) => {
             </div>
           </div>
         )}
+
         {mode === 'flag' && (
           <div style={styles.modeContainer}>
             <img
-              src={question.country.flag || fallback.flag || 'https://flagcdn.com/w320/xx.png'}
+              src={question.country.flag}
               alt="Flag"
               style={styles.singleFlag}
               onError={(e) => {
-                console.error('Image failed to load, using fallback');
-                e.target.src = fallback.flag || 'https://flagcdn.com/w320/xx.png';
+                e.target.src = fallback.flag;
               }}
             />
             <form onSubmit={handleGuessSubmit} style={styles.form}>
@@ -173,27 +196,49 @@ const GameScreen = ({ mode, onReturn }) => {
             </form>
           </div>
         )}
-        <p style={styles.score}>Score: {score}</p>
-        <button
-          style={styles.returnButton}
-          onClick={onReturn}
-          onMouseOver={(e) => {
-            e.target.style.backgroundColor = '#acb6e5';
-            e.target.style.transform = 'translateY(-2px)';
-          }}
-          onMouseOut={(e) => {
-            e.target.style.backgroundColor = '#ff6b6b';
-            e.target.style.transform = 'translateY(0)';
-          }}
-        >
-          Return
-        </button>
+
+    {mode === 'moving' && (
+      <div style={styles.movingContainer}>
+        <div style={styles.targetHeader}>
+          FIND: <span style={styles.targetCountry}>{targetCountry}</span>
+        </div>
+        <div style={styles.flagsArea}>
+          {flags.map((flag) => (
+            <img
+              key={flag.code}
+              src={flag.flag}
+              alt="flag"
+              style={{
+                ...styles.flag,
+                position: 'absolute',
+                left: flag.x,
+                top: flag.y,
+                border: flag.isCorrect ? '3px solid #27ae60' : 'none',
+                boxShadow: flag.isCorrect ? '0 0 20px rgba(39, 174, 96, 0.6)' : 'none',
+                transform: `scale(${flag.isCorrect ? 1.15 : 1})`,
+              }}
+              onClick={() => handleFlagClick(flag)}
+            />
+          ))}
+        </div>
+      </div>
+    )}
+
+        <div style={styles.footer}>
+          <p style={styles.score}>Score: {score}</p>
+          <button 
+            style={styles.returnButton}
+            onClick={onReturn}
+          >
+            Return to Menu
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
-// Inline styles (unchanged)
+
 const styles = {
   container: {
     display: 'flex',
@@ -206,7 +251,7 @@ const styles = {
     padding: '20px',
   },
   title: {
-    fontSize: '3rem',
+    fontSize: '2.5rem',
     color: '#fff',
     textShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)',
     marginBottom: '30px',
@@ -228,9 +273,10 @@ const styles = {
     gap: '20px',
   },
   countryName: {
-    fontSize: '1.8rem',
-    color: '#333',
-    marginBottom: '20px',
+    fontSize: '2rem',
+    color: '#2c3e50',
+    fontWeight: '600',
+    margin: '20px 0',
   },
   flagsContainer: {
     display: 'flex',
@@ -242,57 +288,91 @@ const styles = {
     width: '100px',
     height: '60px',
     cursor: 'pointer',
-    borderRadius: '5px',
-    transition: 'transform 0.2s, box-shadow 0.2s',
+    borderRadius: '8px',
+    transition: 'all 0.2s ease',
     boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
   },
   singleFlag: {
-    width: '120px',
-    height: '70px',
-    borderRadius: '5px',
-    boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
+    width: '160px',
+    height: '100px',
+    borderRadius: '10px',
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.15)',
   },
   form: {
     display: 'flex',
     gap: '10px',
     alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: '20px',
   },
   input: {
-    padding: '10px',
+    padding: '12px 20px',
     fontSize: '1rem',
     border: '2px solid #ddd',
-    borderRadius: '5px',
-    outline: 'none',
-    width: '200px',
-    transition: 'border-color 0.2s',
+    borderRadius: '25px',
+    width: '250px',
+    transition: 'all 0.3s ease',
   },
   button: {
-    padding: '10px 20px',
+    padding: '12px 25px',
     fontSize: '1rem',
     backgroundColor: '#74ebd5',
     color: '#fff',
     border: 'none',
-    borderRadius: '5px',
+    borderRadius: '25px',
     cursor: 'pointer',
-    transition: 'background-color 0.2s, transform 0.1s',
-    boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
+    transition: 'all 0.3s ease',
+  },
+  movingContainer: {
+    position: 'relative',
+    height: '500px',
+    width: '100%',
+    overflow: 'hidden',
+    borderRadius: '15px',
+    backgroundColor: '#f8f9fa',
+    margin: '20px 0',
+  },
+  targetHeader: {
+    fontSize: '1.8rem',
+    color: '#2c3e50',
+    margin: '20px 0',
+    padding: '15px 30px',
+    backgroundColor: '#fff',
+    borderRadius: '30px',
+    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+    display: 'inline-block',
+  },
+  targetCountry: {
+    color: '#27ae60',
+    fontWeight: '700',
+    textShadow: '0 2px 4px rgba(39, 174, 96, 0.2)',
+  },
+  flagsArea: {
+    position: 'relative',
+    height: '400px',
+    width: '500px',
+    margin: '0 auto',
+  },
+  footer: {
+    marginTop: '30px',
+    borderTop: '2px solid #eee',
+    paddingTop: '20px',
+  },
+  score: {
+    fontSize: '1.4rem',
+    color: '#555',
+    fontWeight: '600',
+    margin: '15px 0',
   },
   returnButton: {
-    marginTop: '20px',
-    padding: '10px 20px',
+    padding: '12px 30px',
     fontSize: '1rem',
     backgroundColor: '#ff6b6b',
     color: '#fff',
     border: 'none',
-    borderRadius: '5px',
+    borderRadius: '25px',
     cursor: 'pointer',
-    transition: 'background-color 0.2s, transform 0.1s',
-    boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
-  },
-  score: {
-    fontSize: '1.2rem',
-    color: '#555',
-    marginTop: '20px',
+    transition: 'all 0.3s ease',
   },
   loading: {
     fontSize: '1.5rem',

@@ -25,7 +25,20 @@ app.get('/api/countries/random', (req, res) => {
     res.json({ country: randomCountry, otherFlags });
   } else if (mode === 'flag') {
     res.json({ country: randomCountry });
-  } else {
+  // when in moving mode the server sends 1 correct flag + 49 decoy flags
+  } else if (mode == 'moving') {
+    const otherFlags = [];
+    while (otherFlags.length < 49){
+      const randomFlag = countries[Math.floor(Math.random() * countries.length)];
+      if (
+        randomFlag.name !== randomCountry.name && !otherFlags.some((flag) => flag.name == randomFlag.name)
+      ){
+        otherFlags.push({ flag: randomFlag.flag, name: randomFlag.name});
+      }
+    }
+    res.json({ country: randomCountry, otherFlags});
+  }
+  else {
     res.status(400).json({ error: 'Invalid mode' });
   }
 });
