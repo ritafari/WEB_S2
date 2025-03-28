@@ -3,11 +3,17 @@
 To get the app up and running, follow these steps. This assumes you have [Node.js](https://nodejs.org/) and npm installed on your machine.
 
 1. **Install Dependencies**  
-   Make sure all the required packages are installed by navigating to the project root directory and running:  
+   Make sure all the required packages are installed by running:  
    ```bash
+   cd frontend
    npm install
    ```
 
+    ```bash
+   cd ..
+   cd backend
+   npm install
+   ```
 2. **Start the backend**
     Move into the `backend` folder and launch the server:
     ```
