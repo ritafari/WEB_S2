@@ -2,6 +2,47 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import './Gamescreen.css';
 
+// Game Over Component
+const GameOverPage = ({ score, onReturn, onPlayAgain }) => {
+  return (
+    <div className="game-over-container">
+      <div className="game-over-content">
+        <h1>Game Over</h1>
+        <p className="final-score">Your Score: {score}</p>
+        <div className="game-over-actions">
+          <button onClick={onPlayAgain} className="menu-button">
+            Play Again
+          </button>
+          <button onClick={onReturn} className="menu-button">
+            Return to Main Menu
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Winning Component
+const WinningPage = ({ score, onReturn, onPlayAgain }) => {
+  return (
+    <div className="winning-container">
+      <div className="winning-content">
+        <h1>Congratulations!</h1>
+        <h2>You Won!</h2>
+        <p className="final-score">Your Score: {score}</p>
+        <div className="winning-actions">
+          <button onClick={onPlayAgain} className="menu-button">
+            Play Again
+          </button>
+          <button onClick={onReturn} className="menu-button">
+            Return to Main Menu
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const GameScreen = ({ mode, onReturn }) => {
   const [question, setQuestion] = useState(null);
   const [score, setScore] = useState(0);
@@ -9,7 +50,12 @@ const GameScreen = ({ mode, onReturn }) => {
   const [fallback, setFallback] = useState({ name: '', flag: '' });
   const [flags, setFlags] = useState([]);
   const [targetCountry, setTargetCountry] = useState('');
+  const [gameOver, setGameOver] = useState(false);
+  const [gameWon, setGameWon] = useState(false);
+  const [lives, setLives] = useState(3); // Add lives for game over condition
   const animationFrameRef = useRef(null);
+
+  const SCORE_TO_WIN = 10; // Set winning condition
 
   const fetchRandomCountry = async () => {
     try {
@@ -20,6 +66,14 @@ const GameScreen = ({ mode, onReturn }) => {
       return { name: 'Unknown', flag: 'https://flagcdn.com/w320/xx.png' };
     }
   };
+
+  const resetGame = useCallback(() => {
+    setScore(0);
+    setGameOver(false);
+    setGameWon(false);
+    setLives(3);
+    fetchQuestion();
+  }, [mode]);
 
   const fetchQuestion = useCallback(async () => {
     try {
@@ -41,7 +95,6 @@ const GameScreen = ({ mode, onReturn }) => {
       else if (mode === 'moving') {
         const { country, otherFlags } = res.data;
         
-        // creates completely random order with correct flag mixed in
         const initialFlags = [
           ...otherFlags.map(flag => ({
             ...flag,
@@ -60,7 +113,7 @@ const GameScreen = ({ mode, onReturn }) => {
             vy: (Math.random() - 0.5) * 8,
             isCorrect: true
           }
-        ].sort(() => Math.random() - 0.5); // shuffle
+        ].sort(() => Math.random() - 0.5);
       
         setTargetCountry(country.name);
         setFlags(initialFlags);
@@ -77,10 +130,9 @@ const GameScreen = ({ mode, onReturn }) => {
   }, [mode]);
 
   useEffect(() => {
-    fetchQuestion();
-  }, [fetchQuestion, mode]);
+    resetGame();
+  }, [mode, resetGame]);
 
-  // For the animation 
   useEffect(() => {
     const animate = () => {
       setFlags(prevFlags => prevFlags.map(flag => {
@@ -89,7 +141,6 @@ const GameScreen = ({ mode, onReturn }) => {
         let newVx = flag.vx;
         let newVy = flag.vy;
 
-        // To make the flags bounce off walls
         if (newX <= 0 || newX >= 500) newVx *= -1;
         if (newY <= 0 || newY >= 400) newVy *= -1;
 
@@ -104,7 +155,7 @@ const GameScreen = ({ mode, onReturn }) => {
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
-    if (mode === 'moving') {
+    if (mode === 'moving' && !gameOver && !gameWon) {
       animationFrameRef.current = requestAnimationFrame(animate);
     }
     
@@ -113,23 +164,44 @@ const GameScreen = ({ mode, onReturn }) => {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [mode]);
+  }, [mode, gameOver, gameWon]);
 
   const handleFlagClick = (clickedFlag) => {
     if (clickedFlag.isCorrect) {
-      setScore(prev => prev + 1);
-      fetchQuestion();
+      const newScore = score + 1;
+      setScore(newScore);
+      if (newScore >= SCORE_TO_WIN) {
+        setGameWon(true);
+      } else {
+        fetchQuestion();
+      }
     } else {
-      onReturn();
+      const newLives = lives - 1;
+      setLives(newLives);
+      if (newLives <= 0) {
+        setGameOver(true);
+      }
     }
   };
 
   const handleGuess = (selectedName) => {
     if (!question?.country) return;
+    
     if (selectedName === question.country.name) {
-      setScore(prev => prev + 1);
+      const newScore = score + 1;
+      setScore(newScore);
+      if (newScore >= SCORE_TO_WIN) {
+        setGameWon(true);
+      } else {
+        fetchQuestion();
+      }
+    } else {
+      const newLives = lives - 1;
+      setLives(newLives);
+      if (newLives <= 0) {
+        setGameOver(true);
+      }
     }
-    fetchQuestion();
   };
 
   const handleGuessSubmit = async (e) => {
@@ -142,12 +214,46 @@ const GameScreen = ({ mode, onReturn }) => {
         countryName: question.country.name,
         mode: 'flag',
       });
-      if (res.data.correct) setScore(prev => prev + 1);
-      fetchQuestion();
+      
+      if (res.data.correct) {
+        const newScore = score + 1;
+        setScore(newScore);
+        if (newScore >= SCORE_TO_WIN) {
+          setGameWon(true);
+        } else {
+          fetchQuestion();
+        }
+      } else {
+        const newLives = lives - 1;
+        setLives(newLives);
+        if (newLives <= 0) {
+          setGameOver(true);
+        }
+      }
     } catch (error) {
       console.error('Error checking answer:', error);
     }
   };
+
+  if (gameOver) {
+    return (
+      <GameOverPage 
+        score={score}
+        onReturn={onReturn}
+        onPlayAgain={resetGame}
+      />
+    );
+  }
+
+  if (gameWon) {
+    return (
+      <WinningPage 
+        score={score}
+        onReturn={onReturn}
+        onPlayAgain={resetGame}
+      />
+    );
+  }
 
   if (!question || !question.country) {
     return <div style={styles.loading}>Loading...</div>;
@@ -197,35 +303,36 @@ const GameScreen = ({ mode, onReturn }) => {
           </div>
         )}
 
-    {mode === 'moving' && (
-      <div style={styles.movingContainer}>
-        <div style={styles.targetHeader}>
-          FIND: <span style={styles.targetCountry}>{targetCountry}</span>
-        </div>
-        <div style={styles.flagsArea}>
-          {flags.map((flag) => (
-            <img
-              key={flag.code}
-              src={flag.flag}
-              alt="flag"
-              style={{
-                ...styles.flag,
-                position: 'absolute',
-                left: flag.x,
-                top: flag.y,
-                border: flag.isCorrect ? '3px solid #27ae60' : 'none',
-                boxShadow: flag.isCorrect ? '0 0 20px rgba(39, 174, 96, 0.6)' : 'none',
-                transform: `scale(${flag.isCorrect ? 1.15 : 1})`,
-              }}
-              onClick={() => handleFlagClick(flag)}
-            />
-          ))}
-        </div>
-      </div>
-    )}
+        {mode === 'moving' && (
+          <div style={styles.movingContainer}>
+            <div style={styles.targetHeader}>
+              FIND: <span style={styles.targetCountry}>{targetCountry}</span>
+            </div>
+            <div style={styles.flagsArea}>
+              {flags.map((flag) => (
+                <img
+                  key={flag.code}
+                  src={flag.flag}
+                  alt="flag"
+                  style={{
+                    ...styles.flag,
+                    position: 'absolute',
+                    left: flag.x,
+                    top: flag.y,
+                    border: flag.isCorrect ? '3px solid #27ae60' : 'none',
+                    boxShadow: flag.isCorrect ? '0 0 20px rgba(39, 174, 96, 0.6)' : 'none',
+                    transform: `scale(${flag.isCorrect ? 1.15 : 1})`,
+                  }}
+                  onClick={() => handleFlagClick(flag)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         <div style={styles.footer}>
           <p style={styles.score}>Score: {score}</p>
+          <p style={styles.lives}>Lives: {lives}</p>
           <button 
             style={styles.returnButton}
             onClick={onReturn}
