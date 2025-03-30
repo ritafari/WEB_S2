@@ -52,7 +52,7 @@ const GameScreen = ({ mode, onReturn }) => {
   const [targetCountry, setTargetCountry] = useState('');
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
-  const [lives, setLives] = useState(3); // Add lives for game over condition
+  const [lives, setLives] = useState(5); // Add lives for game over condition
   const animationFrameRef = useRef(null);
 
   const SCORE_TO_WIN = 10; // Set winning condition
@@ -71,7 +71,7 @@ const GameScreen = ({ mode, onReturn }) => {
     setScore(0);
     setGameOver(false);
     setGameWon(false);
-    setLives(3);
+    setLives(5);
     fetchQuestion();
   }, [mode]);
 
