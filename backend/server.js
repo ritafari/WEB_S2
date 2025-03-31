@@ -11,7 +11,7 @@ app.get('/api/countries/random', (req, res) => {
   const mode = req.query.mode; // Get mode from query parameter
   const randomCountry = countries[Math.floor(Math.random() * countries.length)];
 
-  if (mode === 'name') {
+  if (mode === 'name' || mode === 'streak') {
     const otherFlags = [];
     while (otherFlags.length < 4) {
       const randomFlag = countries[Math.floor(Math.random() * countries.length)];

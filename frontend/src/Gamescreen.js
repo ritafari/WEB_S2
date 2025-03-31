@@ -53,9 +53,11 @@ const GameScreen = ({ mode, onReturn }) => {
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
   const [lives, setLives] = useState(5); // Add lives for game over condition
+  const [streak, setStreak] = useState(0);
   const animationFrameRef = useRef(null);
 
   const SCORE_TO_WIN = 10; // Set winning condition
+  const STREAK_TO_WIN = 5;
 
   const fetchRandomCountry = async () => {
     try {
@@ -73,13 +75,14 @@ const GameScreen = ({ mode, onReturn }) => {
     setGameWon(false);
     setLives(5);
     fetchQuestion();
+    setStreak(0);
   }, [mode]);
 
   const fetchQuestion = useCallback(async () => {
     try {
       const res = await axios.get(`http://localhost:5001/api/countries/random?mode=${mode}`);
       
-      if (mode === 'name') {
+      if (mode === 'name' || mode === 'streak' ){
         const { country, otherFlags } = res.data;
         const allFlags = [
           { flag: country.flag, name: country.name, isCorrect: true },
@@ -190,16 +193,32 @@ const GameScreen = ({ mode, onReturn }) => {
     if (selectedName === question.country.name) {
       const newScore = score + 1;
       setScore(newScore);
-      if (newScore >= SCORE_TO_WIN) {
-        setGameWon(true);
-      } else {
-        fetchQuestion();
+      
+      if (mode === 'streak') {
+        const newStreak = streak + 1;
+        setStreak(newStreak);
+        if (newStreak >= STREAK_TO_WIN) {
+          setGameWon(true);
+        } else {
+          fetchQuestion();
+        }
+      } else if (mode === 'name') {
+        if (newScore >= SCORE_TO_WIN) {
+          setGameWon(true);
+        } else {
+          fetchQuestion();
+        }
       }
     } else {
-      const newLives = lives - 1;
-      setLives(newLives);
-      if (newLives <= 0) {
-        setGameOver(true);
+      if (mode === 'streak') {
+        setStreak(0); // Reset streak on wrong answer
+        fetchQuestion();
+      } else {
+        const newLives = lives - 1;
+        setLives(newLives);
+        if (newLives <= 0) {
+          setGameOver(true);
+        }
       }
     }
   };
@@ -238,7 +257,7 @@ const GameScreen = ({ mode, onReturn }) => {
   if (gameOver) {
     return (
       <GameOverPage 
-        score={score}
+        score={mode === 'streak' ? streak : score}
         onReturn={onReturn}
         onPlayAgain={resetGame}
       />
@@ -248,7 +267,7 @@ const GameScreen = ({ mode, onReturn }) => {
   if (gameWon) {
     return (
       <WinningPage 
-        score={score}
+        score={mode === 'streak' ? streak : score}
         onReturn={onReturn}
         onPlayAgain={resetGame}
       />
@@ -263,7 +282,7 @@ const GameScreen = ({ mode, onReturn }) => {
     <div style={styles.container}>
       <h1 style={styles.title}>🌍 Country Quiz Challenge</h1>
       <div style={styles.gameBox}>
-        {mode === 'name' && (
+        {(mode === 'name' || mode === 'streak') && (
           <div style={styles.modeContainer}>
             <h2 style={styles.countryName}>{question.country.name}</h2>
             <div style={styles.flagsContainer}>
@@ -331,8 +350,10 @@ const GameScreen = ({ mode, onReturn }) => {
         )}
 
         <div style={styles.footer}>
-          <p style={styles.score}>Score: {score}</p>
-          <p style={styles.lives}>Lives: {lives}</p>
+          <p style={styles.score}>
+            {mode === 'streak' ? `Streak: ${streak}` : `Score: ${score}`}
+          </p>
+          {mode !== 'streak' && <p style={styles.lives}>Lives: {lives}</p>}
           <button 
             style={styles.returnButton}
             onClick={onReturn}
