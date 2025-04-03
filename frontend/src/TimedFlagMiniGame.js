@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import './TimedFlagMiniGame.css';
 
-function TimedFlagGame({ onReturnToMenu }) {
+function TimedFlagGame({ onReturnToMenu, onGameWon, onGameLost, embedded }) {
     const [currentFlag, setCurrentFlag] = useState(null);
     const [correctGuesses, setCorrectGuesses] = useState(0);
     const [guess, setGuess] = useState('');
@@ -57,6 +57,12 @@ function TimedFlagGame({ onReturnToMenu }) {
         setMessage('');
         fetchFlag();
     };
+
+    const handleGameEnd = (won) => {
+        if (embedded) {
+          won ? onGameWon() : onGameLost();
+        }
+      };
 
     const handleGuess = async (e) => {
         e.preventDefault();

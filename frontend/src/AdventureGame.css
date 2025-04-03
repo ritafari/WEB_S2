@@ -1,0 +1,220 @@
+.adventure-container {
+    position: relative;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    padding: 2rem;
+    overflow: hidden;
+  }
+  
+  .world-map {
+    position: relative;
+    height: 100vh;
+    background-image: url('https://i.redd.it/p3k3ylnb8vs11.jpg');
+    background-size: cover;
+    background-position: center;
+    margin: -2rem;
+  }
+  
+  .map-node {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translate(-50%, -50%);
+    transition: all 0.3s ease;
+    border: 3px solid;
+    cursor: pointer;
+  }
+  
+  .map-node.forest {
+    background: #2d5a27;
+    border-color: #1e3d1a;
+  }
+  
+  .map-node.mountain {
+    background: #6b6b6b;
+    border-color: #4a4a4a;
+  }
+  
+  .map-node.volcano {
+    background: #c44536;
+    border-color: #8a2e24;
+  }
+  
+  .map-node.castle {
+    background: #d4af37;
+    border-color: #b5942e;
+    width: 80px;
+    height: 80px;
+  }
+  
+  .map-node.active {
+    box-shadow: 0 0 20px rgba(78, 204, 163, 0.5);
+  }
+  
+  @keyframes node-pulse {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.1); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+  }
+  
+  .challenge-indicator {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+    background: #fff;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    color: #2c3e50;
+    font-weight: bold;
+  }
+  
+  .map-character {
+    position: absolute;
+    font-size: 2.5rem;
+    transform: translate(-50%, -50%);
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    animation: float 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+  
+  @keyframes float {
+    0% { transform: translate(-50%, -55%); }
+    50% { transform: translate(-50%, -45%); }
+    100% { transform: translate(-50%, -55%); }
+  }
+  
+  .challenge-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+    max-width: 90vw;
+    width: 500px;
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  
+  @keyframes modalAppear {
+    from { 
+      transform: translate(-50%, -100%) scale(0.5);
+      opacity: 0;
+    }
+    to { 
+      transform: translate(-50%, -100%) scale(1);
+      opacity: 1;
+    }
+  }
+  
+  .challenge-content {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    padding: 20px;
+    min-width: 300px;
+    max-width: 100%;
+    position: relative;
+    margin: 10px;
+  }
+  
+  
+  .challenge-content::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -10px;
+    border-width: 10px;
+    border-style: solid;
+    border-color: white transparent transparent transparent;
+  }
+
+.tutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.8);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tutorial-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  max-width: 500px;
+  text-align: center;
+}
+  
+  @media (max-width: 768px) {
+    .challenge-modal {
+      width: 90vw;
+      left: 5vw !important;
+      transform: none;
+    }
+    
+    .challenge-content {
+      min-width: unset;
+      width: 100%;
+    }
+  }
+  
+  .adventure-result {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.9);
+    color: white;
+    padding: 3rem;
+    border-radius: 15px;
+    text-align: center;
+    max-width: 600px;
+    width: 90%;
+    border: 2px solid #4ecca3;
+    animation: popIn 0.3s ease-out;
+    z-index: 2000;
+  }
+  
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+  
+  .action-buttons button {
+    padding: 10px 25px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+  }
+  
+  .action-buttons button:first-child {
+    background: #4ecca3;
+    color: white;
+  }
+  
+  .action-buttons button:last-child {
+    background: #ff6b6b;
+    color: white;
+  }
+  
+  .action-buttons button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }

@@ -1,79 +1,209 @@
-/* Game Result Pages */
-.game-over-container, .winning-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+.game-screen {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
   text-align: center;
-  font-family: 'Poppins', sans-serif;
-  background: linear-gradient(135deg, #74ebd5, #acb6e5);
-  color: #fff;
 }
 
-.game-over-content, .winning-content {
-  background-color: rgba(255, 255, 255, 0.9);
-  padding: 2rem 3rem;
-  border-radius: 15px;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-  max-width: 500px;
+.title {
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin-bottom: 2rem;
+}
+
+.game-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.mode-container {
+  margin-bottom: 2rem;
+}
+
+.country-name {
+  font-size: 2rem;
+  color: #34495e;
+  margin-bottom: 1.5rem;
+}
+
+.flags-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.flag-option {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.flag-option:hover {
+  transform: scale(1.05);
+}
+
+.main-flag {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  margin-bottom: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.guess-form {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.guess-input {
+  padding: 0.8rem 1.2rem;
+  font-size: 1rem;
+  border: 2px solid #bdc3c7;
+  border-radius: 25px;
+  width: 300px;
+}
+
+.submit-button {
+  padding: 0.8rem 1.5rem;
+  background: #3498db;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.submit-button:hover {
+  background: #2980b9;
+}
+
+.moving-container {
+  position: relative;
+  height: 500px;
+  margin-bottom: 2rem;
+}
+
+.target-header {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
   color: #2c3e50;
 }
 
-.game-over-container h1 {
-  color: #e74c3c;
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
+.target-name {
+  color: #27ae60;
+  font-weight: bold;
 }
 
-.winning-container h1 {
+.flags-area {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  background: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.moving-flag {
+  position: absolute;
+  width: 80px;
+  height: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+}
+
+.moving-flag.correct {
+  border: 3px solid #27ae60;
+  box-shadow: 0 0 15px rgba(39, 174, 96, 0.4);
+}
+
+.game-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1.5rem;
+  border-top: 2px solid #ecf0f1;
+}
+
+.stats {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  font-size: 1.2rem;
+  color: #7f8c8d;
+}
+
+.streak-counter {
+  color: #e67e22;
+  font-weight: bold;
+}
+
+.best-streak {
   color: #2ecc71;
-  font-size: 2.5rem;
-  margin-bottom: 0.5rem;
 }
 
-.winning-container h2 {
-  color: #f39c12;
-  font-size: 2rem;
-  margin-top: 0;
-  margin-bottom: 1rem;
+.score-counter {
+  color: #3498db;
+}
+
+.lives-counter {
+  color: #e74c3c;
+}
+
+.menu-button {
+  padding: 0.6rem 1.2rem;
+  background: #95a5a6;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.menu-button:hover {
+  background: #7f8c8d;
+}
+
+/* Game result pages */
+.game-over-container, .winning-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.game-over-content, .winning-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  text-align: center;
+  max-width: 500px;
+  width: 90%;
 }
 
 .final-score {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   margin: 1.5rem 0;
-  color: #3498db;
-  font-weight: bold;
+  color: #2c3e50;
 }
 
 .game-over-actions, .winning-actions {
   display: flex;
   gap: 1rem;
   justify-content: center;
-  margin-top: 2rem;
-}
-
-.menu-button {
-  background-color: #3498db;
-  color: white;
-  border: none;
-  padding: 12px 25px;
-  font-size: 1rem;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.menu-button:hover {
-  background-color: #2980b9;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-}
-
-/* Add to your existing styles */
-.lives {
-  font-size: 1.4rem;
-  color: #555;
-  font-weight: 600;
-  margin: 15px 0;
 }

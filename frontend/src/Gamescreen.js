@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import './Gamescreen.css';
 
-// Game Over Component
 const GameOverPage = ({ score, onReturn, onPlayAgain }) => {
   return (
     <div className="game-over-container">
@@ -22,7 +21,6 @@ const GameOverPage = ({ score, onReturn, onPlayAgain }) => {
   );
 };
 
-// Winning Component
 const WinningPage = ({ score, onReturn, onPlayAgain }) => {
   return (
     <div className="winning-container">
@@ -43,7 +41,7 @@ const WinningPage = ({ score, onReturn, onPlayAgain }) => {
   );
 };
 
-const GameScreen = ({ mode, onReturn }) => {
+const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = false }) => {
   const [question, setQuestion] = useState(null);
   const [score, setScore] = useState(0);
   const [guess, setGuess] = useState('');
@@ -52,12 +50,22 @@ const GameScreen = ({ mode, onReturn }) => {
   const [targetCountry, setTargetCountry] = useState('');
   const [gameOver, setGameOver] = useState(false);
   const [gameWon, setGameWon] = useState(false);
-  const [lives, setLives] = useState(5); // Add lives for game over condition
+  const [lives, setLives] = useState(5);
   const [streak, setStreak] = useState(0);
+  const [highestStreak, setHighestStreak] = useState(
+    () => parseInt(localStorage.getItem('highestStreak')) || 0
+  );
   const animationFrameRef = useRef(null);
 
-  const SCORE_TO_WIN = 10; // Set winning condition
+  const SCORE_TO_WIN = 10;
   const STREAK_TO_WIN = 5;
+
+  useEffect(() => {
+    if (mode === 'streak' && streak > highestStreak) {
+      localStorage.setItem('highestStreak', streak);
+      setHighestStreak(streak);
+    }
+  }, [streak, highestStreak, mode]);
 
   const fetchRandomCountry = async () => {
     try {
@@ -82,7 +90,7 @@ const GameScreen = ({ mode, onReturn }) => {
     try {
       const res = await axios.get(`http://localhost:5001/api/countries/random?mode=${mode}`);
       
-      if (mode === 'name' || mode === 'streak' ){
+      if (mode === 'name' || mode === 'streak') {
         const { country, otherFlags } = res.data;
         const allFlags = [
           { flag: country.flag, name: country.name, isCorrect: true },
@@ -132,6 +140,21 @@ const GameScreen = ({ mode, onReturn }) => {
     }
   }, [mode]);
 
+  useEffect(() => {
+    if (gameWon && onGameWon) onGameWon();
+  }, [gameWon, onGameWon]);
+
+  useEffect(() => {
+    if (gameOver && onGameLost) onGameLost();
+  }, [gameOver, onGameLost]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await fetchQuestion();
+    };
+    fetchData();
+  }, [fetchQuestion]);
+  
   useEffect(() => {
     resetGame();
   }, [mode, resetGame]);
@@ -211,7 +234,7 @@ const GameScreen = ({ mode, onReturn }) => {
       }
     } else {
       if (mode === 'streak') {
-        setStreak(0); // Reset streak on wrong answer
+        setStreak(0);
         fetchQuestion();
       } else {
         const newLives = lives - 1;
@@ -254,7 +277,7 @@ const GameScreen = ({ mode, onReturn }) => {
     }
   };
 
-  if (gameOver) {
+  if (!suppressResults && gameOver) {
     return (
       <GameOverPage 
         score={mode === 'streak' ? streak : score}
@@ -264,7 +287,7 @@ const GameScreen = ({ mode, onReturn }) => {
     );
   }
 
-  if (gameWon) {
+  if (!suppressResults && gameWon) {
     return (
       <WinningPage 
         score={mode === 'streak' ? streak : score}
@@ -353,6 +376,9 @@ const GameScreen = ({ mode, onReturn }) => {
           <p style={styles.score}>
             {mode === 'streak' ? `Streak: ${streak}` : `Score: ${score}`}
           </p>
+          {mode === 'streak' && (
+            <p style={styles.highestStreak}>Highest Streak: {highestStreak}</p>
+          )}
           {mode !== 'streak' && <p style={styles.lives}>Lives: {lives}</p>}
           <button 
             style={styles.returnButton}
@@ -365,7 +391,6 @@ const GameScreen = ({ mode, onReturn }) => {
     </div>
   );
 };
-
 
 const styles = {
   container: {
@@ -487,6 +512,18 @@ const styles = {
     paddingTop: '20px',
   },
   score: {
+    fontSize: '1.4rem',
+    color: '#555',
+    fontWeight: '600',
+    margin: '15px 0',
+  },
+  highestStreak: {
+    fontSize: '1.2rem',
+    color: '#27ae60',
+    fontWeight: 'bold',
+    margin: '10px 0',
+  },
+  lives: {
     fontSize: '1.4rem',
     color: '#555',
     fontWeight: '600',
