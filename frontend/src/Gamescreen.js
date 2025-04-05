@@ -56,6 +56,7 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
     () => parseInt(localStorage.getItem('highestStreak')) || 0
   );
   const animationFrameRef = useRef(null);
+  const headerRef = useRef(null);
 
   const SCORE_TO_WIN = 10;
   const STREAK_TO_WIN = 5;
@@ -105,27 +106,28 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
       }
       else if (mode === 'moving') {
         const { country, otherFlags } = res.data;
+        const headerHeight = headerRef.current?.getBoundingClientRect().height || 80; // Default to 80px if not yet rendered
         
         const initialFlags = [
-          ...otherFlags.map(flag => ({
+          ...otherFlags.slice(0, 49).map(flag => ({
             ...flag,
-            x: Math.random() * 500,
-            y: Math.random() * 500,
-            vx: (Math.random() - 0.5) * 8,
-            vy: (Math.random() - 0.5) * 8,
+            x: Math.random() * window.innerWidth,
+            y: headerHeight + Math.random() * (window.innerHeight - headerHeight),
+            vx: (Math.random() - 0.5) * 3,
+            vy: (Math.random() - 0.5) * 3,
             isCorrect: false
           })),
           {
             ...country,
-            code: country.code + '_TARGET', 
-            x: Math.random() * 500,
-            y: Math.random() * 500,
-            vx: (Math.random() - 0.5) * 8,
-            vy: (Math.random() - 0.5) * 8,
+            code: country.code + '_TARGET',
+            x: Math.random() * window.innerWidth,
+            y: headerHeight + Math.random() * (window.innerHeight - headerHeight),
+            vx: (Math.random() - 0.5) * 3,
+            vy: (Math.random() - 0.5) * 3,
             isCorrect: true
           }
         ].sort(() => Math.random() - 0.5);
-      
+        
         setTargetCountry(country.name);
         setFlags(initialFlags);
         setQuestion({ country });
@@ -161,27 +163,32 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
 
   useEffect(() => {
     const animate = () => {
-      setFlags(prevFlags => prevFlags.map(flag => {
-        let newX = flag.x + flag.vx;
-        let newY = flag.y + flag.vy;
-        let newVx = flag.vx;
-        let newVy = flag.vy;
+      const headerHeight = headerRef.current?.getBoundingClientRect().height || 80;
 
-        if (newX <= 0 || newX >= 500) newVx *= -1;
-        if (newY <= 0 || newY >= 400) newVy *= -1;
+      setFlags(prevFlags => {
+        const updatedFlags = prevFlags.map(flag => {
+          let newX = flag.x + flag.vx;
+          let newY = flag.y + flag.vy;
+          let newVx = flag.vx;
+          let newVy = flag.vy;
 
-        return {
-          ...flag,
-          x: Math.max(0, Math.min(500, newX)),
-          y: Math.max(0, Math.min(400, newY)),
-          vx: newVx,
-          vy: newVy
-        };
-      }));
+          if (newX <= 0 || newX >= window.innerWidth - 80) newVx *= -1;
+          if (newY <= headerHeight || newY >= window.innerHeight - 50) newVy *= -1;
+
+          return {
+            ...flag,
+            x: Math.max(0, Math.min(window.innerWidth - 80, newX)),
+            y: Math.max(headerHeight, Math.min(window.innerHeight - 50, newY)),
+            vx: newVx,
+            vy: newVy
+          };
+        });
+        return updatedFlags;
+      });
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
-    if (mode === 'moving' && !gameOver && !gameWon) {
+    if (mode === 'moving') {
       animationFrameRef.current = requestAnimationFrame(animate);
     }
     
@@ -190,7 +197,7 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [mode, gameOver, gameWon]);
+  }, [mode]);
 
   const handleFlagClick = (clickedFlag) => {
     if (clickedFlag.isCorrect) {
@@ -277,44 +284,69 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
     }
   };
 
-  if (!suppressResults && gameOver) {
+  if (mode === 'moving') {
     return (
-      <GameOverPage 
-        score={mode === 'streak' ? streak : score}
-        onReturn={onReturn}
-        onPlayAgain={resetGame}
-      />
-    );
-  }
-
-  if (!suppressResults && gameWon) {
-    return (
-      <WinningPage 
-        score={mode === 'streak' ? streak : score}
-        onReturn={onReturn}
-        onPlayAgain={resetGame}
-      />
+      <div className="full-screen-container">
+        {flags.map((flag) => (
+          <img
+            key={flag.code}
+            src={flag.flag}
+            alt="flag"
+            className={`moving-flag ${flag.isCorrect ? 'correct' : ''}`}
+            style={{
+              transform: `translate(${flag.x}px, ${flag.y}px)`,
+            }}
+            onClick={() => handleFlagClick(flag)}
+          />
+        ))}
+        <div className="header" ref={headerRef}>
+          <div className="stats-container">
+            <p className="score">Score: {score}</p>
+            <p className="lives">Lives: {lives}</p>
+            <p className="target-header">
+              FIND: <span className="target-country">{targetCountry}</span>
+            </p>
+          </div>
+          <button className="return-button" onClick={onReturn}>
+            Return to Menu
+          </button>
+        </div>
+        {!suppressResults && gameOver && (
+          <GameOverPage 
+            score={score}
+            onReturn={onReturn}
+            onPlayAgain={resetGame}
+          />
+        )}
+        {!suppressResults && gameWon && (
+          <WinningPage 
+            score={score}
+            onReturn={onReturn}
+            onPlayAgain={resetGame}
+          />
+        )}
+      </div>
     );
   }
 
   if (!question || !question.country) {
-    return <div style={styles.loading}>Loading...</div>;
+    return <div className="loading">Loading...</div>;
   }
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>🌍 Country Quiz Challenge</h1>
-      <div style={styles.gameBox}>
+    <div className="container">
+      <h1 className="title">🌍 Country Quiz Challenge</h1>
+      <div className="game-box">
         {(mode === 'name' || mode === 'streak') && (
-          <div style={styles.modeContainer}>
-            <h2 style={styles.countryName}>{question.country.name}</h2>
-            <div style={styles.flagsContainer}>
+          <div className="mode-container">
+            <h2 className="country-name">{question.country.name}</h2>
+            <div className="flags-container">
               {question.allFlags?.map((flagObj, index) => (
                 <img
                   key={`flag-${index}`}
                   src={flagObj.flag}
                   alt={`Flag ${index + 1}`}
-                  style={styles.flag}
+                  className="flag"
                   onClick={() => handleGuess(flagObj.name)}
                 />
               ))}
@@ -323,227 +355,60 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
         )}
 
         {mode === 'flag' && (
-          <div style={styles.modeContainer}>
+          <div className="mode-container">
             <img
               src={question.country.flag}
               alt="Flag"
-              style={styles.singleFlag}
+              className="single-flag"
               onError={(e) => {
                 e.target.src = fallback.flag;
               }}
             />
-            <form onSubmit={handleGuessSubmit} style={styles.form}>
+            <form onSubmit={handleGuessSubmit} className="form">
               <input
                 type="text"
                 value={guess}
                 onChange={(e) => setGuess(e.target.value)}
                 placeholder="Type the country name"
-                style={styles.input}
+                className="input"
               />
-              <button type="submit" style={styles.button}>Submit</button>
+              <button type="submit" className="button">Submit</button>
             </form>
           </div>
         )}
 
-        {mode === 'moving' && (
-          <div style={styles.movingContainer}>
-            <div style={styles.targetHeader}>
-              FIND: <span style={styles.targetCountry}>{targetCountry}</span>
-            </div>
-            <div style={styles.flagsArea}>
-              {flags.map((flag) => (
-                <img
-                  key={flag.code}
-                  src={flag.flag}
-                  alt="flag"
-                  style={{
-                    ...styles.flag,
-                    position: 'absolute',
-                    left: flag.x,
-                    top: flag.y,
-                    border: flag.isCorrect ? '3px solid #27ae60' : 'none',
-                    boxShadow: flag.isCorrect ? '0 0 20px rgba(39, 174, 96, 0.6)' : 'none',
-                    transform: `scale(${flag.isCorrect ? 1.15 : 1})`,
-                  }}
-                  onClick={() => handleFlagClick(flag)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div style={styles.footer}>
-          <p style={styles.score}>
+        <div className="footer">
+          <p className="score">
             {mode === 'streak' ? `Streak: ${streak}` : `Score: ${score}`}
           </p>
           {mode === 'streak' && (
-            <p style={styles.highestStreak}>Highest Streak: {highestStreak}</p>
+            <p className="highest-streak">Highest Streak: {highestStreak}</p>
           )}
-          {mode !== 'streak' && <p style={styles.lives}>Lives: {lives}</p>}
+          {mode !== 'streak' && <p className="lives">Lives: {lives}</p>}
           <button 
-            style={styles.returnButton}
+            className="return-button"
             onClick={onReturn}
           >
             Return to Menu
           </button>
         </div>
       </div>
+      {!suppressResults && gameOver && (
+        <GameOverPage 
+          score={mode === 'streak' ? streak : score}
+          onReturn={onReturn}
+          onPlayAgain={resetGame}
+        />
+      )}
+      {!suppressResults && gameWon && (
+        <WinningPage 
+          score={mode === 'streak' ? streak : score}
+          onReturn={onReturn}
+          onPlayAgain={resetGame}
+        />
+      )}
     </div>
   );
-};
-
-const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    background: 'linear-gradient(135deg, #74ebd5, #acb6e5)',
-    fontFamily: "'Poppins', sans-serif",
-    padding: '20px',
-  },
-  title: {
-    fontSize: '2.5rem',
-    color: '#fff',
-    textShadow: '2px 2px 4px rgba(0, 0, 0, 0.3)',
-    marginBottom: '30px',
-    textAlign: 'center',
-  },
-  gameBox: {
-    backgroundColor: '#fff',
-    borderRadius: '15px',
-    padding: '30px',
-    boxShadow: '0 10px 20px rgba(0, 0, 0, 0.2)',
-    maxWidth: '600px',
-    width: '100%',
-    textAlign: 'center',
-  },
-  modeContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '20px',
-  },
-  countryName: {
-    fontSize: '2rem',
-    color: '#2c3e50',
-    fontWeight: '600',
-    margin: '20px 0',
-  },
-  flagsContainer: {
-    display: 'flex',
-    gap: '15px',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  flag: {
-    width: '100px',
-    height: '60px',
-    cursor: 'pointer',
-    borderRadius: '8px',
-    transition: 'all 0.2s ease',
-    boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
-  },
-  singleFlag: {
-    width: '160px',
-    height: '100px',
-    borderRadius: '10px',
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.15)',
-  },
-  form: {
-    display: 'flex',
-    gap: '10px',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: '20px',
-  },
-  input: {
-    padding: '12px 20px',
-    fontSize: '1rem',
-    border: '2px solid #ddd',
-    borderRadius: '25px',
-    width: '250px',
-    transition: 'all 0.3s ease',
-  },
-  button: {
-    padding: '12px 25px',
-    fontSize: '1rem',
-    backgroundColor: '#74ebd5',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '25px',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-  },
-  movingContainer: {
-    position: 'relative',
-    height: '500px',
-    width: '100%',
-    overflow: 'hidden',
-    borderRadius: '15px',
-    backgroundColor: '#f8f9fa',
-    margin: '20px 0',
-  },
-  targetHeader: {
-    fontSize: '1.8rem',
-    color: '#2c3e50',
-    margin: '20px 0',
-    padding: '15px 30px',
-    backgroundColor: '#fff',
-    borderRadius: '30px',
-    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
-    display: 'inline-block',
-  },
-  targetCountry: {
-    color: '#27ae60',
-    fontWeight: '700',
-    textShadow: '0 2px 4px rgba(39, 174, 96, 0.2)',
-  },
-  flagsArea: {
-    position: 'relative',
-    height: '400px',
-    width: '500px',
-    margin: '0 auto',
-  },
-  footer: {
-    marginTop: '30px',
-    borderTop: '2px solid #eee',
-    paddingTop: '20px',
-  },
-  score: {
-    fontSize: '1.4rem',
-    color: '#555',
-    fontWeight: '600',
-    margin: '15px 0',
-  },
-  highestStreak: {
-    fontSize: '1.2rem',
-    color: '#27ae60',
-    fontWeight: 'bold',
-    margin: '10px 0',
-  },
-  lives: {
-    fontSize: '1.4rem',
-    color: '#555',
-    fontWeight: '600',
-    margin: '15px 0',
-  },
-  returnButton: {
-    padding: '12px 30px',
-    fontSize: '1rem',
-    backgroundColor: '#ff6b6b',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '25px',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-  },
-  loading: {
-    fontSize: '1.5rem',
-    color: '#fff',
-    textAlign: 'center',
-  },
 };
 
 export default GameScreen;

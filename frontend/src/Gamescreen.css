@@ -1,115 +1,106 @@
-.game-screen {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+.full-screen-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #74ebd5, #acb6e5);
+  overflow: hidden;
+  font-family: 'Poppins', sans-serif;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #74ebd5, #acb6e5);
+  font-family: 'Poppins', sans-serif;
+  padding: 20px;
 }
 
 .title {
   font-size: 2.5rem;
-  color: #2c3e50;
-  margin-bottom: 2rem;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  margin-bottom: 30px;
+  text-align: center;
 }
 
-.game-content {
-  background: white;
-  padding: 2rem;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.game-box {
+  background-color: #fff;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
 }
 
 .mode-container {
-  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 
 .country-name {
   font-size: 2rem;
-  color: #34495e;
-  margin-bottom: 1.5rem;
+  color: #2c3e50;
+  font-weight: 600;
+  margin: 20px 0;
 }
 
-.flags-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.flag-option {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.flag-option:hover {
-  transform: scale(1.05);
-}
-
-.main-flag {
-  width: 100%;
-  max-width: 400px;
-  height: auto;
-  margin-bottom: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.guess-form {
+.flags-container {
   display: flex;
-  gap: 1rem;
+  gap: 15px;
+  flex-wrap: wrap;
   justify-content: center;
-  margin-bottom: 2rem;
 }
 
-.guess-input {
-  padding: 0.8rem 1.2rem;
+.flag {
+  width: 80px;
+  height: 50px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.single-flag {
+  width: 160px;
+  height: 100px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.input {
+  padding: 12px 20px;
   font-size: 1rem;
-  border: 2px solid #bdc3c7;
+  border: 2px solid #ddd;
   border-radius: 25px;
-  width: 300px;
+  width: 250px;
+  transition: all 0.3s ease;
 }
 
-.submit-button {
-  padding: 0.8rem 1.5rem;
-  background: #3498db;
-  color: white;
+.button {
+  padding: 12px 25px;
+  font-size: 1rem;
+  background-color: #74ebd5;
+  color: #fff;
   border: none;
   border-radius: 25px;
   cursor: pointer;
-  transition: background 0.2s;
-}
-
-.submit-button:hover {
-  background: #2980b9;
-}
-
-.moving-container {
-  position: relative;
-  height: 500px;
-  margin-bottom: 2rem;
-}
-
-.target-header {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  color: #2c3e50;
-}
-
-.target-name {
-  color: #27ae60;
-  font-weight: bold;
-}
-
-.flags-area {
-  position: relative;
-  height: 100%;
-  width: 100%;
-  background: #f8f9fa;
-  border-radius: 8px;
-  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .moving-flag {
@@ -117,60 +108,93 @@
   width: 80px;
   height: 50px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border-radius: 4px;
+  border-radius: 8px;
+  transition: transform 0.1s linear;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 1;
 }
 
 .moving-flag.correct {
   border: 3px solid #27ae60;
-  box-shadow: 0 0 15px rgba(39, 174, 96, 0.4);
+  box-shadow: 0 0 20px rgba(39, 174, 96, 0.6);
 }
 
-.game-info {
+.target-header {
+  font-size: 1.8rem;
+  color: #fff;
+  margin: 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.target-country {
+  color: #27ae60;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(39, 174, 96, 0.2);
+}
+
+.footer {
+  margin-top: 30px;
+  border-top: 2px solid #eee;
+  padding-top: 20px;
+}
+
+.score {
+  font-size: 1.4rem;
+  color: #fff;
+  font-weight: 600;
+  margin: 15px 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.highest-streak {
+  font-size: 1.2rem;
+  color: #27ae60;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.lives {
+  font-size: 1.4rem;
+  color: #fff;
+  font-weight: 600;
+  margin: 15px 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.return-button {
+  padding: 12px 30px;
+  font-size: 1rem;
+  background-color: #ff6b6b;
+  color: #fff;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.loading {
+  font-size: 1.5rem;
+  color: #fff;
+  text-align: center;
+}
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 1.5rem;
-  border-top: 2px solid #ecf0f1;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 1000;
 }
 
-.stats {
+.stats-container {
   display: flex;
-  gap: 1.5rem;
+  gap: 20px;
   align-items: center;
-  font-size: 1.2rem;
-  color: #7f8c8d;
-}
-
-.streak-counter {
-  color: #e67e22;
-  font-weight: bold;
-}
-
-.best-streak {
-  color: #2ecc71;
-}
-
-.score-counter {
-  color: #3498db;
-}
-
-.lives-counter {
-  color: #e74c3c;
-}
-
-.menu-button {
-  padding: 0.6rem 1.2rem;
-  background: #95a5a6;
-  color: white;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.menu-button:hover {
-  background: #7f8c8d;
 }
 
 /* Game result pages */
@@ -184,7 +208,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 2000;
 }
 
 .game-over-content, .winning-content {
@@ -206,4 +230,18 @@
   display: flex;
   gap: 1rem;
   justify-content: center;
+}
+
+.menu-button {
+  padding: 0.6rem 1.2rem;
+  background: #95a5a6;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.menu-button:hover {
+  background: #7f8c8d;
 }

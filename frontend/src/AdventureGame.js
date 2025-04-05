@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import GameScreen from './Gamescreen';
 import TimedFlagGame from './TimedFlagMiniGame';
 import './AdventureGame.css';
@@ -8,12 +8,15 @@ const AdventureGame = ({ onReturnToMenu }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [gameStatus, setGameStatus] = useState('playing');
   const [showChallenge, setShowChallenge] = useState(false);
-  const [nodePosition, setNodePosition] = useState({ x: 0, y: 0 });
+  const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [showTutorial, setShowTutorial] = useState(true);
   const [highestStreak, setHighestStreak] = useState(
     parseInt(localStorage.getItem('highestStreak')) || 0
   );
   const nodeRefs = useRef([]);
+  const modalRef = useRef(null);
 
   const mapNodes = [
     { id: 1, top: '75%', left: '15%', terrain: 'forest' },
@@ -42,14 +45,60 @@ const AdventureGame = ({ onReturnToMenu }) => {
     const node = nodeRefs.current[index];
     if (node && index === currentStep) {
       const rect = node.getBoundingClientRect();
-      setNodePosition({
-        x: rect.left + window.scrollX,
-        y: rect.top + window.scrollY
-      });
+      const modalWidth = 500;
+      const modalHeight = 400;
+      let x = rect.left + window.scrollX + rect.width / 2 - modalWidth / 2;
+      let y = rect.top + window.scrollY + rect.height;
+
+      x = Math.max(20, Math.min(x, window.innerWidth - modalWidth - 20));
+      y = Math.max(20, Math.min(y, window.innerHeight - modalHeight - 20));
+
+      setModalPosition({ x, y });
       setShowChallenge(true);
       setShowTutorial(false);
     }
   };
+
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    const modal = modalRef.current;
+    const rect = modal.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+  };
+
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (!isDragging) return;
+      const modalWidth = modalRef.current.offsetWidth;
+      const modalHeight = modalRef.current.offsetHeight;
+      let newX = e.clientX - dragOffset.x;
+      let newY = e.clientY - dragOffset.y;
+
+      newX = Math.max(0, Math.min(newX, window.innerWidth - modalWidth));
+      newY = Math.max(0, Math.min(newY, window.innerHeight - modalHeight));
+
+      setModalPosition({ x: newX, y: newY });
+    },
+    [isDragging, dragOffset]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const handleGameWon = () => {
     if (currentStep < 2) {
@@ -86,6 +135,11 @@ const AdventureGame = ({ onReturnToMenu }) => {
     setCurrentStep(0);
     setGameStatus('playing');
     setShowTutorial(true);
+  };
+
+  const handleReturnFromModal = () => {
+    setShowChallenge(false); // Close the modal
+    onReturnToMenu(); // Return to main menu
   };
 
   const getModeInstructions = (mode) => {
@@ -160,6 +214,14 @@ const AdventureGame = ({ onReturnToMenu }) => {
         </div>
       </div>
 
+      {/* Return to Menu button in Adventure Mode */}
+      <button 
+        className="adventure-return-button"
+        onClick={onReturnToMenu}
+      >
+        Return to Main Menu
+      </button>
+
       {showTutorial && selectedModes.length > 0 && (
         <div className="tutorial-overlay">
           <div className="tutorial-content">
@@ -175,15 +237,30 @@ const AdventureGame = ({ onReturnToMenu }) => {
       {showChallenge && selectedModes[currentStep] && (
         <div 
           className="challenge-modal"
+          ref={modalRef}
           style={{
-            top: `${Math.min(nodePosition.y, window.innerHeight - 400)}px`,
-            left: `${Math.max(20, Math.min(nodePosition.x, window.innerWidth - 420))}px`,
+            left: `${modalPosition.x}px`,
+            top: `${modalPosition.y}px`,
+            transform: 'none',
+            cursor: isDragging ? 'grabbing' : 'grab'
           }}
         >
+          <div 
+            className="modal-header"
+            onMouseDown={handleMouseDown}
+          >
+            <span>{getModeInstructions(selectedModes[currentStep])}</span>
+            <button 
+              className="close-button"
+              onClick={() => setShowChallenge(false)}
+            >
+              ✕
+            </button>
+          </div>
           <div className="challenge-content">
             {selectedModes[currentStep] === 'timed' ? (
               <TimedFlagGame 
-                onReturnToMenu={onReturnToMenu}
+                onReturnToMenu={handleReturnFromModal} // Updated to handle modal closure
                 onGameWon={handleGameWon}
                 onGameLost={handleGameLost}
                 embedded={true}
@@ -191,6 +268,7 @@ const AdventureGame = ({ onReturnToMenu }) => {
             ) : (
               <GameScreen
                 mode={selectedModes[currentStep]}
+                onReturn={handleReturnFromModal} // Updated prop name to match GameScreen
                 onGameWon={handleGameWon}
                 onGameLost={handleGameLost}
                 suppressResults={true}
@@ -199,6 +277,13 @@ const AdventureGame = ({ onReturnToMenu }) => {
                 STREAK_TO_WIN={5}
               />
             )}
+            {/* Explicit Return to Menu button in modal */}
+            <button 
+              className="modal-return-button"
+              onClick={handleReturnFromModal}
+            >
+              Return to Main Menu
+            </button>
           </div>
         </div>
       )}
