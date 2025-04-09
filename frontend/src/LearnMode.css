@@ -1,0 +1,103 @@
+.learn-mode-container {
+  padding: 20px;
+  text-align: center;
+  background-color: #f0f0f0;
+  min-height: 100vh;
+}
+
+.learn-mode-title {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.flags-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+  padding: 0 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.flag-card {
+  width: 100px; 
+  height: 75px; 
+  cursor: pointer;
+  transition: transform 0.2s;
+  overflow: hidden; 
+}
+
+.flag-card:hover {
+  transform: scale(1.1);
+}
+
+.learn-flag {
+  width: 100%;
+  height: 100%; 
+  object-fit: cover; 
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.return-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.return-button:hover {
+  background-color: #0056b3;
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.popup-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+}
+
+.popup-flag {
+  width: 200px; 
+  height: 150px; 
+  object-fit: cover; 
+  margin-bottom: 20px;
+}
+
+.popup-content h2 {
+  margin: 0 0 20px;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.close-button {
+  padding: 8px 16px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.close-button:hover {
+  background-color: #c82333;
+}

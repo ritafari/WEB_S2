@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import './Gamescreen.css';
 
+
 const GameOverPage = ({ score, onReturn, onPlayAgain }) => {
   return (
     <div className="game-over-container">
@@ -9,12 +10,8 @@ const GameOverPage = ({ score, onReturn, onPlayAgain }) => {
         <h1>Game Over</h1>
         <p className="final-score">Your Score: {score}</p>
         <div className="game-over-actions">
-          <button onClick={onPlayAgain} className="menu-button">
-            Play Again
-          </button>
-          <button onClick={onReturn} className="menu-button">
-            Return to Main Menu
-          </button>
+          <button onClick={onPlayAgain} className="menu-button">Play Again</button>
+          <button onClick={onReturn} className="menu-button">Return to Main Menu</button>
         </div>
       </div>
     </div>
@@ -29,12 +26,8 @@ const WinningPage = ({ score, onReturn, onPlayAgain }) => {
         <h2>You Won!</h2>
         <p className="final-score">Your Score: {score}</p>
         <div className="winning-actions">
-          <button onClick={onPlayAgain} className="menu-button">
-            Play Again
-          </button>
-          <button onClick={onReturn} className="menu-button">
-            Return to Main Menu
-          </button>
+          <button onClick={onPlayAgain} className="menu-button">Play Again</button>
+          <button onClick={onReturn} className="menu-button">Return to Main Menu</button>
         </div>
       </div>
     </div>
@@ -52,21 +45,66 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
   const [gameWon, setGameWon] = useState(false);
   const [lives, setLives] = useState(5);
   const [streak, setStreak] = useState(0);
-  const [highestStreak, setHighestStreak] = useState(
-    () => parseInt(localStorage.getItem('highestStreak')) || 0
-  );
+  const [highestStreak, setHighestStreak] = useState(0);
+  const [playerName, setPlayerName] = useState('');
+  const [showNamePopup, setShowNamePopup] = useState(false);
+  const [leaderboard, setLeaderboard] = useState([]);
+
   const animationFrameRef = useRef(null);
   const headerRef = useRef(null);
 
   const SCORE_TO_WIN = 10;
-  const STREAK_TO_WIN = 5;
+
+  const getHighestStreakFromLeaderboard = (leaderboardData) => {
+    if (!Array.isArray(leaderboardData) || leaderboardData.length === 0) {
+      return 0;
+    }
+    return Math.max(...leaderboardData.map(entry => entry.streak));
+  };
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      console.log('Starting fetchLeaderboard for mode:', mode);
+      try {
+        const res = await axios.get('http://localhost:5001/api/leaderboard');
+        console.log('Fetch status:', res.status);
+        console.log('Fetch data:', res.data);
+        if (Array.isArray(res.data)) {
+          const sorted = res.data.sort((a, b) => b.streak - a.streak);
+          setLeaderboard(sorted.slice(0, 10));
+          const maxStreak = getHighestStreakFromLeaderboard(sorted);
+          setHighestStreak(maxStreak);
+        } else {
+          console.warn('Fetched data is not an array:', res.data);
+          setLeaderboard([]);
+          setHighestStreak(0);
+        }
+      } catch (error) {
+        console.error('Fetch error:', error.message);
+        setLeaderboard([]);
+        setHighestStreak(0);
+      }
+    };
+    if (mode === 'streak') {
+      fetchLeaderboard();
+    } else {
+      console.log('Clearing leaderboard for mode:', mode);
+      setLeaderboard([]);
+      setHighestStreak(0);
+    }
+  }, [mode]);
 
   useEffect(() => {
     if (mode === 'streak' && streak > highestStreak) {
-      localStorage.setItem('highestStreak', streak);
       setHighestStreak(streak);
     }
   }, [streak, highestStreak, mode]);
+
+  useEffect(() => {
+    if (mode === 'streak' && !playerName && !showNamePopup) {
+      setShowNamePopup(true);
+    }
+  }, [mode, playerName]);
 
   const fetchRandomCountry = async () => {
     try {
@@ -85,12 +123,12 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
     setLives(5);
     fetchQuestion();
     setStreak(0);
+    if (mode === 'streak') setShowNamePopup(true);
   }, [mode]);
 
   const fetchQuestion = useCallback(async () => {
     try {
       const res = await axios.get(`http://localhost:5001/api/countries/random?mode=${mode}`);
-      
       if (mode === 'name' || mode === 'streak') {
         const { country, otherFlags } = res.data;
         const allFlags = [
@@ -98,16 +136,13 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
           ...otherFlags.map(flag => ({ ...flag, isCorrect: false })),
         ].sort(() => Math.random() - 0.5);
         setQuestion({ country, allFlags });
-      } 
-      else if (mode === 'flag') {
+      } else if (mode === 'flag') {
         const country = res.data.country;
         if (!country?.flag) throw new Error('Invalid country data');
         setQuestion({ country });
-      }
-      else if (mode === 'moving') {
+      } else if (mode === 'moving') {
         const { country, otherFlags } = res.data;
-        const headerHeight = headerRef.current?.getBoundingClientRect().height || 80; // Default to 80px if not yet rendered
-        
+        const headerHeight = headerRef.current?.getBoundingClientRect().height || 80;
         const initialFlags = [
           ...otherFlags.slice(0, 49).map(flag => ({
             ...flag,
@@ -127,12 +162,10 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
             isCorrect: true
           }
         ].sort(() => Math.random() - 0.5);
-        
         setTargetCountry(country.name);
         setFlags(initialFlags);
         setQuestion({ country });
       }
-      
       setGuess('');
     } catch (error) {
       console.error('Error fetching question:', error);
@@ -156,7 +189,7 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
     };
     fetchData();
   }, [fetchQuestion]);
-  
+
   useEffect(() => {
     resetGame();
   }, [mode, resetGame]);
@@ -164,17 +197,14 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
   useEffect(() => {
     const animate = () => {
       const headerHeight = headerRef.current?.getBoundingClientRect().height || 80;
-
       setFlags(prevFlags => {
         const updatedFlags = prevFlags.map(flag => {
           let newX = flag.x + flag.vx;
           let newY = flag.y + flag.vy;
           let newVx = flag.vx;
           let newVy = flag.vy;
-
           if (newX <= 0 || newX >= window.innerWidth - 80) newVx *= -1;
           if (newY <= headerHeight || newY >= window.innerHeight - 50) newVy *= -1;
-
           return {
             ...flag,
             x: Math.max(0, Math.min(window.innerWidth - 80, newX)),
@@ -187,11 +217,9 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
       });
       animationFrameRef.current = requestAnimationFrame(animate);
     };
-
     if (mode === 'moving') {
       animationFrameRef.current = requestAnimationFrame(animate);
     }
-    
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
@@ -218,20 +246,14 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
   };
 
   const handleGuess = (selectedName) => {
-    if (!question?.country) return;
-    
+    if (!question?.country || gameWon) return;
     if (selectedName === question.country.name) {
       const newScore = score + 1;
       setScore(newScore);
-      
       if (mode === 'streak') {
         const newStreak = streak + 1;
         setStreak(newStreak);
-        if (newStreak >= STREAK_TO_WIN) {
-          setGameWon(true);
-        } else {
-          fetchQuestion();
-        }
+        fetchQuestion();
       } else if (mode === 'name') {
         if (newScore >= SCORE_TO_WIN) {
           setGameWon(true);
@@ -255,15 +277,13 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
 
   const handleGuessSubmit = async (e) => {
     e.preventDefault();
-    if (!question?.country || !guess.trim()) return;
-
+    if (!question?.country || !guess.trim() || gameWon) return;
     try {
       const res = await axios.post('http://localhost:5001/api/check-answer', {
         guess: guess.trim(),
         countryName: question.country.name,
         mode: 'flag',
       });
-      
       if (res.data.correct) {
         const newScore = score + 1;
         setScore(newScore);
@@ -284,6 +304,68 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
     }
   };
 
+  const saveStreak = async () => {
+    if (mode === 'streak' && playerName) {
+      
+      if (streak >= 2) {
+        try {
+          console.log('Attempting to save streak:', { name: playerName, streak });
+          const postRes = await axios.post('http://localhost:5001/api/leaderboard', {
+            name: playerName,
+            streak: streak,
+          });
+          console.log('POST response:', postRes.data);
+          if (postRes.data.success) {
+            console.log('Streak saved successfully');
+          } else {
+            console.log(`Streak ${streak} not saved: ${postRes.data.message}`);
+          }
+          
+          const updatedLeaderboard = postRes.data.leaderboard;
+          if (Array.isArray(updatedLeaderboard)) {
+            const sorted = updatedLeaderboard.sort((a, b) => b.streak - a.streak);
+            setLeaderboard(sorted.slice(0, 10));
+            const maxStreak = getHighestStreakFromLeaderboard(sorted);
+            setHighestStreak(maxStreak);
+          } else {
+            console.warn('Invalid leaderboard data in response:', updatedLeaderboard);
+          }
+        } catch (error) {
+          console.error('Error saving streak:', error);
+          try {
+            const res = await axios.get('http://localhost:5001/api/leaderboard');
+            const sorted = res.data.sort((a, b) => b.streak - a.streak);
+            setLeaderboard(sorted.slice(0, 10));
+            const maxStreak = getHighestStreakFromLeaderboard(sorted);
+            setHighestStreak(maxStreak);
+          } catch (fetchError) {
+            console.error('Error fetching leaderboard after failed save:', fetchError);
+          }
+        }
+      } else {
+        console.log(`Streak ${streak} is less than 2; not attempting to save`);
+       
+        try {
+          const res = await axios.get('http://localhost:5001/api/leaderboard');
+          const sorted = res.data.sort((a, b) => b.streak - a.streak);
+          setLeaderboard(sorted.slice(0, 10));
+          const maxStreak = getHighestStreakFromLeaderboard(sorted);
+          setHighestStreak(maxStreak);
+        } catch (fetchError) {
+          console.error('Error fetching leaderboard:', fetchError);
+        }
+      }
+    }
+    onReturn();
+  };
+
+  const handleNameSubmit = (e) => {
+    e.preventDefault();
+    if (playerName.trim()) {
+      setShowNamePopup(false);
+    }
+  };
+
   if (mode === 'moving') {
     return (
       <div className="full-screen-container">
@@ -293,9 +375,7 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
             src={flag.flag}
             alt="flag"
             className={`moving-flag ${flag.isCorrect ? 'correct' : ''}`}
-            style={{
-              transform: `translate(${flag.x}px, ${flag.y}px)`,
-            }}
+            style={{ transform: `translate(${flag.x}px, ${flag.y}px)` }}
             onClick={() => handleFlagClick(flag)}
           />
         ))}
@@ -307,23 +387,13 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
               FIND: <span className="target-country">{targetCountry}</span>
             </p>
           </div>
-          <button className="return-button" onClick={onReturn}>
-            Return to Menu
-          </button>
+          <button className="return-button" onClick={onReturn}>Return to Menu</button>
         </div>
         {!suppressResults && gameOver && (
-          <GameOverPage 
-            score={score}
-            onReturn={onReturn}
-            onPlayAgain={resetGame}
-          />
+          <GameOverPage score={score} onReturn={onReturn} onPlayAgain={resetGame} />
         )}
         {!suppressResults && gameWon && (
-          <WinningPage 
-            score={score}
-            onReturn={onReturn}
-            onPlayAgain={resetGame}
-          />
+          <WinningPage score={score} onReturn={onReturn} onPlayAgain={resetGame} />
         )}
       </div>
     );
@@ -335,77 +405,97 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
 
   return (
     <div className="container">
-      <h1 className="title">🌍 Country Quiz Challenge</h1>
-      <div className="game-box">
-        {(mode === 'name' || mode === 'streak') && (
-          <div className="mode-container">
-            <h2 className="country-name">{question.country.name}</h2>
-            <div className="flags-container">
-              {question.allFlags?.map((flagObj, index) => (
-                <img
-                  key={`flag-${index}`}
-                  src={flagObj.flag}
-                  alt={`Flag ${index + 1}`}
-                  className="flag"
-                  onClick={() => handleGuess(flagObj.name)}
-                />
-              ))}
+      {mode === 'streak' && (
+        <div className="leaderboard-container">
+          <h3>🏆 Leaderboard</h3>
+          <ul>
+            {leaderboard.length > 0 ? (
+              leaderboard.map((entry, index) => (
+                <li key={index}>
+                  <span className="rank">#{index + 1}</span>
+                  <span className="name">{entry.name}</span>
+                  <span className="streak">{entry.streak}</span>
+                </li>
+              ))
+            ) : (
+              <li>No entries yet</li>
+            )}
+          </ul>
+        </div>
+      )}
+      <div className="game-content">
+        <h1 className="title">🌍 Country Quiz Challenge</h1>
+        <div className="game-box">
+          {(mode === 'name' || mode === 'streak') && !gameWon && (
+            <div className="mode-container">
+              <h2 className="country-name">{question.country.name}</h2>
+              <div className="flags-container">
+                {question.allFlags?.map((flagObj, index) => (
+                  <img
+                    key={`flag-${index}`}
+                    src={flagObj.flag}
+                    alt={`Flag ${index + 1}`}
+                    className="flag"
+                    onClick={() => handleGuess(flagObj.name)}
+                  />
+                ))}
+              </div>
             </div>
+          )}
+          {mode === 'flag' && (
+            <div className="mode-container">
+              <img
+                src={question.country.flag}
+                alt="Flag"
+                className="single-flag"
+                onError={(e) => { e.target.src = fallback.flag; }}
+              />
+              <form onSubmit={handleGuessSubmit} className="form">
+                <input
+                  type="text"
+                  value={guess}
+                  onChange={(e) => setGuess(e.target.value)}
+                  placeholder="Type the country name"
+                  className="input"
+                />
+                <button type="submit" className="button">Submit</button>
+              </form>
+            </div>
+          )}
+          <div className="footer">
+            <p className="score">
+              {mode === 'streak' ? `Streak: ${streak}` : `Score: ${score}`}
+            </p>
+            {mode === 'streak' && (
+              <p className="highest-streak">Highest Streak: {highestStreak}</p>
+            )}
+            {mode !== 'streak' && <p className="lives">Lives: {lives}</p>}
+            <button className="return-button" onClick={saveStreak}>Return to Menu</button>
           </div>
+        </div>
+        {mode !== 'streak' && !suppressResults && gameOver && (
+          <GameOverPage score={mode === 'streak' ? streak : score} onReturn={onReturn} onPlayAgain={resetGame} />
         )}
-
-        {mode === 'flag' && (
-          <div className="mode-container">
-            <img
-              src={question.country.flag}
-              alt="Flag"
-              className="single-flag"
-              onError={(e) => {
-                e.target.src = fallback.flag;
-              }}
-            />
-            <form onSubmit={handleGuessSubmit} className="form">
+        {!suppressResults && gameWon && (
+          <WinningPage score={mode === 'streak' ? streak : score} onReturn={saveStreak} onPlayAgain={resetGame} />
+        )}
+      </div>
+      {showNamePopup && mode === 'streak' && (
+        <div className="popup-overlay">
+          <div className="popup-content">
+            <h2>Enter Your Name</h2>
+            <form onSubmit={handleNameSubmit}>
               <input
                 type="text"
-                value={guess}
-                onChange={(e) => setGuess(e.target.value)}
-                placeholder="Type the country name"
-                className="input"
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                placeholder="Your name"
+                required
               />
-              <button type="submit" className="button">Submit</button>
+              <button type="submit">Start</button>
             </form>
           </div>
-        )}
-
-        <div className="footer">
-          <p className="score">
-            {mode === 'streak' ? `Streak: ${streak}` : `Score: ${score}`}
-          </p>
-          {mode === 'streak' && (
-            <p className="highest-streak">Highest Streak: {highestStreak}</p>
-          )}
-          {mode !== 'streak' && <p className="lives">Lives: {lives}</p>}
-          <button 
-            className="return-button"
-            onClick={onReturn}
-          >
-            Return to Menu
-          </button>
         </div>
-      </div>
-      {!suppressResults && gameOver && (
-        <GameOverPage 
-          score={mode === 'streak' ? streak : score}
-          onReturn={onReturn}
-          onPlayAgain={resetGame}
-        />
-      )}
-      {!suppressResults && gameWon && (
-        <WinningPage 
-          score={mode === 'streak' ? streak : score}
-          onReturn={onReturn}
-          onPlayAgain={resetGame}
-        />
       )}
     </div>
   );
