@@ -1,103 +1,192 @@
+/* Base styles */
 .learn-mode-container {
-  padding: 20px;
+  padding: 2rem;
   text-align: center;
   background-color: #f0f0f0;
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .learn-mode-title {
   font-size: 2.5rem;
-  margin-bottom: 20px;
+  margin-bottom: 1.5rem;
   color: #333;
+  line-height: 1.3;
+  padding: 0 1rem;
 }
 
 .flags-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 10px;
-  padding: 0 20px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1.5rem;
+  padding: 0 1rem;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .flag-card {
-  width: 100px; 
-  height: 75px; 
+  width: 100%;
+  aspect-ratio: 4/3;
   cursor: pointer;
   transition: transform 0.2s;
-  overflow: hidden; 
-}
-
-.flag-card:hover {
-  transform: scale(1.1);
+  overflow: hidden;
+  margin: 0 auto;
 }
 
 .learn-flag {
   width: 100%;
-  height: 100%; 
-  object-fit: cover; 
+  height: 100%;
+  object-fit: cover;
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .return-button {
-  margin-top: 20px;
-  padding: 10px 20px;
+  margin: 1.5rem auto;
+  padding: 0.75rem 1.5rem;
   font-size: 1rem;
   background-color: #007bff;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-}
-
-.return-button:hover {
-  background-color: #0056b3;
+  max-width: 200px;
+  width: auto;
 }
 
 .popup-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000;
 }
 
 .popup-content {
   background-color: white;
-  padding: 20px;
+  padding: 2rem;
   border-radius: 10px;
   text-align: center;
   max-width: 400px;
   width: 90%;
+  margin: 1rem;
+  box-sizing: border-box;
 }
 
 .popup-flag {
-  width: 200px; 
-  height: 150px; 
-  object-fit: cover; 
-  margin-bottom: 20px;
+  width: 100%;
+  max-height: 200px;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  margin-bottom: 1rem;
 }
 
 .popup-content h2 {
-  margin: 0 0 20px;
+  margin: 0 0 1rem;
   font-size: 1.5rem;
   color: #333;
+  word-break: break-word;
 }
 
 .close-button {
-  padding: 8px 16px;
+  padding: 0.75rem 1.5rem;
   background-color: #dc3545;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  width: auto;
+  max-width: 200px;
 }
 
-.close-button:hover {
-  background-color: #c82333;
+/* Medium screens (tablets, max-width: 899px) */
+@media (max-width: 899px) {
+  .learn-mode-title {
+    font-size: 2rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .flags-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .popup-flag {
+    max-height: 150px;
+  }
+
+  .popup-content h2 {
+    font-size: 1.4rem;
+  }
+}
+
+/* Small screens (phones, max-width: 599px) */
+@media (max-width: 599px) {
+  .learn-mode-container {
+    padding: 1rem;
+  }
+
+  .learn-mode-title {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .flags-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 1rem;
+  }
+
+  .popup-content {
+    padding: 1.5rem;
+  }
+
+  .popup-content h2 {
+    font-size: 1.3rem;
+  }
+
+  .return-button,
+  .close-button {
+    width: 100%;
+  }
+}
+
+/* Extra small screens or landscape phones (max-height: 500px) */
+@media (max-height: 500px) and (orientation: landscape) {
+  .learn-mode-container {
+    padding: 0.5rem;
+  }
+
+  .learn-mode-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .flags-grid {
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.5rem;
+  }
+}
+
+/* Hover effects for devices that support hover */
+@media (hover: hover) {
+  .flag-card:hover {
+    transform: scale(1.1);
+  }
+
+  .return-button:hover {
+    background-color: #0056b3;
+  }
+
+  .close-button:hover {
+    background-color: #c82333;
+  }
+}
+
+/* Accessibility: reduced motion */
+@media (prefers-reduced-motion) {
+  .flag-card {
+    transition: none;
+  }
 }

@@ -190,6 +190,22 @@ function TimedFlagGame({ onReturnToMenu, onGameWon, onGameLost, embedded }) {
                     <option value="hard">Hard (30s)</option>
                 </select>
             </div>
+
+            {/* Added Return to Menu button */}
+            <button 
+                className="return-button" 
+                onClick={onReturnToMenu}
+                style={{
+                    marginTop: '20px',
+                    padding: '8px 16px',
+                    backgroundColor: '#ff6b6b',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                }}
+            >
+                Return to Menu
+            </button>
         </div>
     );
 }
