@@ -64,23 +64,22 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
 
   useEffect(() => {
     const fetchLeaderboard = async () => {
-      console.log('Starting fetchLeaderboard for mode:', mode);
+      
       try {
         const res = await axios.get('http://localhost:5001/api/leaderboard');
-        console.log('Fetch status:', res.status);
-        console.log('Fetch data:', res.data);
+       
         if (Array.isArray(res.data)) {
           const sorted = res.data.sort((a, b) => b.streak - a.streak);
           setLeaderboard(sorted.slice(0, 10));
           const maxStreak = getHighestStreakFromLeaderboard(sorted);
           setHighestStreak(maxStreak);
         } else {
-          console.warn('Fetched data is not an array:', res.data);
+         
           setLeaderboard([]);
           setHighestStreak(0);
         }
       } catch (error) {
-        console.error('Fetch error:', error.message);
+       
         setLeaderboard([]);
         setHighestStreak(0);
       }
@@ -88,7 +87,7 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
     if (mode === 'streak') {
       fetchLeaderboard();
     } else {
-      console.log('Clearing leaderboard for mode:', mode);
+     
       setLeaderboard([]);
       setHighestStreak(0);
     }
@@ -309,17 +308,13 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
       
       if (streak >= 2) {
         try {
-          console.log('Attempting to save streak:', { name: playerName, streak });
+          
           const postRes = await axios.post('http://localhost:5001/api/leaderboard', {
             name: playerName,
             streak: streak,
           });
-          console.log('POST response:', postRes.data);
-          if (postRes.data.success) {
-            console.log('Streak saved successfully');
-          } else {
-            console.log(`Streak ${streak} not saved: ${postRes.data.message}`);
-          }
+         
+          
           
           const updatedLeaderboard = postRes.data.leaderboard;
           if (Array.isArray(updatedLeaderboard)) {
@@ -343,7 +338,7 @@ const GameScreen = ({ mode, onReturn, onGameWon, onGameLost, suppressResults = f
           }
         }
       } else {
-        console.log(`Streak ${streak} is less than 2; not attempting to save`);
+        
        
         try {
           const res = await axios.get('http://localhost:5001/api/leaderboard');
