@@ -15,6 +15,7 @@ const AdventureGame = ({ onReturnToMenu }) => {
   const [highestStreak, setHighestStreak] = useState(
     parseInt(localStorage.getItem('highestStreak')) || 0
   );
+
   const nodeRefs = useRef([]);
   const modalRef = useRef(null);
 
@@ -268,7 +269,7 @@ const AdventureGame = ({ onReturnToMenu }) => {
             ) : (
               <GameScreen
                 mode={selectedModes[currentStep]}
-                onReturn={handleReturnFromModal} // Updated prop name to match GameScreen
+                onReturn={handleReturnFromModal} 
                 onGameWon={handleGameWon}
                 onGameLost={handleGameLost}
                 suppressResults={true}
@@ -278,12 +279,7 @@ const AdventureGame = ({ onReturnToMenu }) => {
               />
             )}
             {/* Explicit Return to Menu button in modal */}
-            <button 
-              className="modal-return-button"
-              onClick={handleReturnFromModal}
-            >
-              Return to Main Menu
-            </button>
+
           </div>
         </div>
       )}

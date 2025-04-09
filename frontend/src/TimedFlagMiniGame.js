@@ -45,8 +45,9 @@ function TimedFlagGame({ onReturnToMenu, onGameWon, onGameLost, embedded }) {
             return () => clearTimeout(timer);
         } else if (timeLeft === 0 && !gameWon) {
             setGameOver(true);
+            onGameLost(); 
         }
-    }, [timeLeft, gameOver, gameWon, loading]);
+    }, [timeLeft, gameOver, gameWon, loading, onGameLost]);
 
     const resetGame = () => {
         setCorrectGuesses(0);

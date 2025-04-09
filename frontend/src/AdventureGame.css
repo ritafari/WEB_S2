@@ -1,10 +1,11 @@
 .adventure-container {
-    position: relative;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #1a1a2e, #16213e);
-    padding: 2rem;
-    overflow: hidden;
-  }
+  position: relative;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  padding: 2rem;
+  overflow-x: hidden !important;
+  overflow-y: auto;; 
+}
   
   .world-map {
     position: relative;
@@ -98,10 +99,16 @@
     background: white;
     border-radius: 1rem;
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    overflow: hidden;
+    overflow: hidden; /* Needed for border-radius to clip content */
     animation: modalAppear 0.3s ease-out;
     display: flex;
     flex-direction: column;
+    
+    /* Resize Configuration */
+    resize: both; /* Enable resizing in both directions */
+    overflow: auto; /* Required for resize to work properly */
+    min-width: 400px; /* Minimum resize constraints */
+    min-height: 300px;
   }
 
 
@@ -212,13 +219,26 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
   }
 
+  .modal-header {
+    position: relative;
+    padding: 15px;
+    background: #4ecca3;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
   .close-button {
+    position: absolute;
+    top: 5px;
+    right: 10px;
     background: none;
     border: none;
     color: white;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     cursor: pointer;
-    padding: 0 0.5rem;
+    padding: 0;
   }
   
   .close-button:hover {
