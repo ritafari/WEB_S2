@@ -35,7 +35,6 @@ const writeLeaderboard = async (data) => {
   }
 };
 
-// Test route to ensure server is alive
 app.get('/test', (req, res) => {
   console.log('GET /test endpoint hit');
   res.json({ message: 'Server is running' });
@@ -57,13 +56,11 @@ app.post('/api/leaderboard', async (req, res) => {
   console.log('POST /api/leaderboard received:', req.body);
   const { name, streak } = req.body;
 
-  // Validate input
   if (!name || typeof streak !== 'number' || !Number.isInteger(streak)) {
     console.error('Invalid request body:', req.body);
     return res.status(400).json({ error: 'Name must be a string and streak must be an integer' });
   }
 
-  // Reject streaks less than 2
   if (streak < 2) {
     console.log(`Streak ${streak} is less than 2; not saving to leaderboard`);
     return res.status(200).json({
@@ -87,7 +84,7 @@ app.post('/api/leaderboard', async (req, res) => {
   }
 });
 
-// Other endpoints (unchanged)
+
 app.get('/api/countries/random', (req, res) => {
   const mode = req.query.mode;
   const randomCountry = countries[Math.floor(Math.random() * countries.length)];
